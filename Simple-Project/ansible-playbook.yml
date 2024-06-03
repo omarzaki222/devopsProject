@@ -1,26 +1,40 @@
 ---
-- name: "Build a container with ansible"
+- name: Build and deploy a Docker container
   hosts: localhost
   connection: local
   tasks:
-    - name: stop current running container
-      command: docker stop web-container
+    - name: Stop current running container
+      docker_container:
+        name: web-container
+        state: stopped
       ignore_errors: yes
 
-    - name: remove stopped container
-      command: docker rm web-container
+    - name: Remove stopped container
+      docker_container:
+        name: web-container
+        state: absent
       ignore_errors: yes
 
-    - name: remove comingsoon-image
-      command: docker rmi triple3a/comingsoon-page
+    - name: Remove comingsoon-image
+      docker_image:
+        name: triple3a/comingsoon-page
+        state: absent
       ignore_errors: yes
 
-    - name: build docker image using the Dockerfile
-      command: docker build -t triple3a/comingsoon-page .
+    - name: Build docker image using the Dockerfile
+      docker_image:
+        name: triple3a/comingsoon-page
+        path: .
+        tag: latest
 
-    - name: Push Image to dockerhub
-      command: docker push triple3a/comingsoon-page
+    - name: Push image to Docker Hub
+      docker_image_push:
+        name: triple3a/comingsoon-page
 
-    - name: run container
-      command: docker run -d --name web-container -p 5000:80 triple3a/comingsoon-page
-
+    - name: Run container
+      docker_container:
+        name: web-container
+        image: triple3a/comingsoon-page:latest
+        state: started
+        ports:
+          - "5000:80"
